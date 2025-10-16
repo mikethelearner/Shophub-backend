@@ -1,0 +1,71 @@
+version: '3.8'
+
+services:
+  # MongoDB service
+  mongodb:
+    image: mongo:4.4
+    container_name: mongodb-dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data_dev:/data/db
+    networks:
+      - app-network-dev
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Backend service in development mode
+  backend:
+    build: ./backend
+    container_name: backend-dev
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app:delegated
+      - backend_media_dev:/app/media
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - SECRET_KEY=django-insecure-ecommerce-project-secret-key-for-development
+      - DEBUG=True
+      - MONGODB_URI=mongodb://mongodb:27017/ecommerce
+    networks:
+      - app-network-dev
+    command: python manage.py runserver 0.0.0.0:8000
+
+  # Frontend service in development mode
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: frontend-dev
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+      - NODE_ENV=development
+    networks:
+      - app-network-dev
+    command: npm run dev
+
+# Volumes
+volumes:
+  mongodb_data_dev:
+  backend_media_dev:
+
+# Networks
+networks:
+  app-network-dev:
+    driver: bridge 

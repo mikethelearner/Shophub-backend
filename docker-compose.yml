@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # MongoDB service
+  mongodb:
+    image: mongo:4.4
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Backend service
+  backend:
+    build: ./backend
+    container_name: backend
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app:delegated
+      - backend_media:/app/media
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - SECRET_KEY=django-insecure-ecommerce-project-secret-key-for-development
+      - DEBUG=True
+      - MONGODB_URI=mongodb://mongodb:27017/ecommerce
+    networks:
+      - app-network
+
+  # Frontend service
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend:/app:delegated
+      - /app/node_modules
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    networks:
+      - app-network
+
+# Volumes
+volumes:
+  mongodb_data:
+  backend_media:
+
+# Networks
+networks:
+  app-network:
+    driver: bridge 
