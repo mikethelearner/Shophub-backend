@@ -79,12 +79,22 @@ WSGI_APPLICATION = 'ecommerce.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'ecommerce',
+        'NAME': 'shophub',
         'CLIENT': {
             'host': os.getenv('MONGODB_URI', 'mongodb://localhost:27017/ecommerce'),
         }
     }
 }
+
+# Cloudinary Configuration
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET')
+}
+
+# Set Cloudinary as default storage for media files
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [

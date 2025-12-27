@@ -1,6 +1,7 @@
 services:
   - type: web
     name: shophub-backend
+    rootDir: backend
     runtime: python
     buildCommand: "./build.sh"
     startCommand: "gunicorn ecommerce.wsgi:application"
