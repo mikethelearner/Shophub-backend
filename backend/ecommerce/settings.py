@@ -82,6 +82,9 @@ DATABASES = {
         'NAME': 'shophub',
         'CLIENT': {
             'host': os.getenv('MONGODB_URI', 'mongodb://localhost:27017/ecommerce'),
+            'tlsAllowInvalidCertificates': True,
+            'ssl': True,
+            'ssl_cert_reqs': 0,  # Disable certificate verification
         }
     }
 }
