@@ -4,10 +4,15 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    id = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
         fields = ('id', 'email', 'name', 'role', 'street', 'city', 'state', 'zip_code', 'phone', 'address')
         read_only_fields = ('id', 'role', 'address')
+    
+    def get_id(self, obj):
+        return str(obj.id) if obj.id else None
 
 
 class RegisterSerializer(serializers.ModelSerializer):
