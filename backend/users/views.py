@@ -13,14 +13,23 @@ class RegisterView(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        
-        return Response({
-            "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "token": AuthToken.objects.create(user)[1]
-        }, status=status.HTTP_201_CREATED)
+        try:
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+            
+            return Response({
+                "user": UserSerializer(user, context=self.get_serializer_context()).data,
+                "token": AuthToken.objects.create(user)[1]
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
+            print(f"Registration error: {error_detail}")
+            return Response({
+                "error": str(e),
+                "detail": error_detail
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class LoginView(KnoxLoginView):
