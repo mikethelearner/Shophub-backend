@@ -74,8 +74,7 @@ class LogoutView(APIView):
     
     def post(self, request, format=None):
         # Clear the user's token
-        request.user.auth_token = None
-        request.user.save()
+        User.objects.filter(email=request.user.email).update(auth_token=None)
         return Response({"message": "Successfully logged out"})
 
 
@@ -104,8 +103,15 @@ class UserDetailView(generics.RetrieveUpdateAPIView):
             instance = self.get_object()
             serializer = self.get_serializer(instance, data=request.data, partial=partial)
             serializer.is_valid(raise_exception=True)
-            self.perform_update(serializer)
-            return Response(serializer.data)
+            
+            # Manually update using queryset to avoid ObjectId/int mismatch in instance.save()
+            User.objects.filter(email=instance.email).update(**serializer.validated_data)
+            
+            # Update instance in memory to return correct response
+            for attr, value in serializer.validated_data.items():
+                setattr(instance, attr, value)
+                
+            return Response(UserSerializer(instance).data)
         except Exception as e:
             return Response(
                 {"error": "Error updating profile", "detail": str(e)},
@@ -132,7 +138,8 @@ class ChangePasswordView(generics.UpdateAPIView):
             
             # Set new password
             user.set_password(serializer.data.get("new_password"))
-            user.save()
+            # Use update to avoid save() crash
+            User.objects.filter(email=user.email).update(password=user.password)
             
             return Response({"message": "Password updated successfully."}, status=status.HTTP_200_OK)
         
