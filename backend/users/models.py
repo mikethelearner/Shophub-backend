@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+import secrets
 
 
 class UserManager(BaseUserManager):
@@ -40,6 +41,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     state = models.CharField(max_length=100, blank=True, null=True)
     zip_code = models.CharField(max_length=20, blank=True, null=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    auth_token = models.CharField(max_length=64, blank=True, null=True)
     
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
@@ -52,6 +54,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def __str__(self):
         return self.email
+    
+    def generate_token(self):
+        """Generate a new auth token for this user"""
+        self.auth_token = secrets.token_hex(32)
+        self.save()
+        return self.auth_token
     
     @property
     def address(self):
