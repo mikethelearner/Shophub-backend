@@ -57,9 +57,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     
     def generate_token(self):
         """Generate a new auth token for this user"""
-        self.auth_token = secrets.token_hex(32)
-        self.save()
-        return self.auth_token
+        token = secrets.token_hex(32)
+        # Use email to identify user instead of pk to avoid ObjectId issue
+        User.objects.filter(email=self.email).update(auth_token=token)
+        self.auth_token = token
+        return token
     
     @property
     def address(self):
